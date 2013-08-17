@@ -192,21 +192,21 @@ class RedmineIssueXML(object):
         
         for issue in sorted(self.githubIssues, key=lambda p: int(p.id)):
             
-            # Too keep the old redmine id's we have to create dummy
+            # To keep the old redmine id's we have to create dummy
             # tickets
             while currentIssue < int(issue.id):
                 if self.getIssue(currentIssue) == None:
                     self.createIssue("Dummy ticket %d" % currentIssue, labels=["Dummy-Ticket"])
                     self.closeIssue(currentIssue)
                 currentIssue += 1
-                
+
             # Check if milestone exists
             milestone = None
             if issue.milestone:
                 if not issue.milestone in self.milestones:
                     self.createMilestone(issue.milestone)
                 milestone = self.milestones[issue.milestone]['number']
-                
+
             # Check if issue exists
             githubissuedata = self.getIssue(issue.id)
             if githubissuedata:
@@ -317,7 +317,8 @@ class RedmineIssueXML(object):
     
     def getLabel(self, label):
         'Fetch a label'
-        issueUrl = self.baseurl + "labels/" + label
+        issueUrl = self.baseurl + "labels/" + urllib.parse.quote_plus(label)
+        print(issueUrl)
         req = urllib.request.Request(issueUrl)
         req.add_header('Authorization', 'Basic %s' % self.authData)
         try:
@@ -399,7 +400,7 @@ if __name__ == '__main__':
     
     rix = RedmineIssueXML()
     rix.readXML(
-       issuesfile, 
+       issuesfile,
        closedStati = [3,5,6], # Redmine ID of closed ticket states
        userMap = { # Map redmine user id to github usernames
            1: 'your-github-username',
