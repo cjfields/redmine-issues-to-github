@@ -82,7 +82,7 @@ class RedmineIssueXML(object):
     def __init__(self):
         pass
         
-    def readXML(self, xmlfile, closedStati=None, userMap=None):
+    def readXML(self, xmlfile, closedStati=None, userMap=None, redmineUrl=None):
         '''Read the issues from the xml file
         closedStati: a list of redmine status ids whose tickets are closed
         userMap: a map of redmine user ids to github usernames 
@@ -90,8 +90,10 @@ class RedmineIssueXML(object):
         self.dom = parse(xmlfile)
         self.redmineIssues = []
         self.githubIssues = []
+        self.redmineIssues = []
         self.closedStati = closedStati
         self.userMap = userMap
+        self.redmineUrl = redmineUrl
         for issue in self.dom.getElementsByTagName('issue'):
             self.addIssue(issue)
             
@@ -127,6 +129,11 @@ class RedmineIssueXML(object):
         issue.body = redmineIssue.description
         issue.body += "\n"
         
+        if self.redmineUrl:
+            issue.body += "__%s:__ [Redmine ID %s](%s/issues/%s)\n" % ('Original Redmine issue link', redmineIssue.id, self.redmineUrl, redmineIssue.id)
+        else:
+            issue.body += "__%s:__ %s\n" % ('Redmine ID', redmineIssue.id)
+        
         for (key, label) in [('author', 'Reporter'), ('assigned_to', 'Assigned to')]:
             v = getattr(redmineIssue, key)
             if v:
@@ -150,6 +157,8 @@ class RedmineIssueXML(object):
         if redmineIssue.fixed_version:
             issue.milestone = redmineIssue.fixed_version['name']
             
+        print(issue.body)
+        
         return issue
             
     def publishIssues(self, user, repo, authUser, authPassword):
@@ -195,11 +204,14 @@ class RedmineIssueXML(object):
             
             # To keep the old redmine id's we have to create dummy
             # tickets
-            while currentIssue < int(issue.id):
-                if self.getIssue(currentIssue) == None:
-                    self.createIssue("Dummy ticket %d" % currentIssue, labels=["Dummy-Ticket"])
-                    self.closeIssue(currentIssue)
-                currentIssue += 1
+            
+            # Do not create dummmy issues!
+            
+            #while currentIssue < int(issue.id):
+            #    if self.getIssue(currentIssue) == None:
+            #        self.createIssue("Dummy ticket %d" % currentIssue, labels=["Dummy-Ticket"])
+            #        self.closeIssue(currentIssue)
+            #    currentIssue += 1
 
             # Check if milestone exists
             milestone = None
@@ -394,7 +406,7 @@ class MyRequest(urllib.request.Request):
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hi:u:r:U:P:", ["help", "issuefile=", "github_user=", "github_repo=", "auth_user=", "auth_pass="])
+        opts, args = getopt.getopt(sys.argv[1:], "hi:u:r:U:P:o:", ["help", "issuefile=", "github_user=", "github_repo=", "auth_user=", "auth_pass=", "redmine_url="])
     except getopt.GetoptError as error:
         print(error)
         sys.exit(2)
@@ -403,12 +415,13 @@ def main():
     repo = 'github-repo'
     authUser = 'user'
     authPassword = 'pass'
+    redmineUrl = ''
     
     for o, a in opts:
         if o in ("-h", "help"):
             print("Help!")
             #usage()
-            #sys.exit(0)
+            sys.exit(0)
         elif o in ("-i", "--issuefile"):
             issuesfile = a
         elif o in ("-u", "--github_user"):
@@ -419,6 +432,8 @@ def main():
             authUser = a
         elif o in ("-P", "--auth_pass"):
             authPassword = a
+        elif o in ("-o", "--redmine_url"):
+            redmineUrl = a
     
     rix = RedmineIssueXML()
     rix.readXML(
@@ -427,7 +442,8 @@ def main():
        userMap = { # Map redmine user id to github usernames
            1: 'your-github-username',
            2: 'colleague-github-username',
-       }
+       },
+       redmineUrl = redmineUrl
     )
     
     #rix.publishIssues(user, repo, authUser, authPassword)
