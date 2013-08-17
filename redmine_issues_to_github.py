@@ -54,6 +54,7 @@ from minidomutil import domGetText
 import urllib.request
 import urllib.parse
 import json
+import getopt
 from base64 import encodebytes as base64
 
 class RedmineIssue(object):
@@ -392,11 +393,32 @@ class MyRequest(urllib.request.Request):
                 return "GET"
 
 def main():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hi:u:r:U:P:", ["help", "issuefile=", "github_user=", "github_repo=", "auth_user=", "auth_pass="])
+    except getopt.GetoptError as error:
+        print(error)
+        sys.exit(2)
     issuesfile = 'issues.xml'
     user = 'github-user'
     repo = 'github-repo'
-    authUser = 'your-github-username'
-    authPassword = 'your-github-password'
+    authUser = 'user'
+    authPassword = 'pass'
+    
+    for o, a in opts:
+        if o in ("-h", "help"):
+            print("Help!")
+            #usage()
+            #sys.exit(0)
+        elif o in ("-i", "--issuefile"):
+            issuesfile = a
+        elif o in ("-u", "--github_user"):
+            user = a
+        elif o in ("-r", "--github_repo"):
+            repo = a
+        elif o in ("-U", "--auth_user"):
+            authUser = a
+        elif o in ("-P", "--auth_pass"):
+            authPassword = a
     
     rix = RedmineIssueXML()
     rix.readXML(
@@ -407,7 +429,8 @@ def main():
            2: 'colleague-github-username',
        }
     )
-    rix.publishIssues(user, repo, authUser, authPassword)
+    
+    #rix.publishIssues(user, repo, authUser, authPassword)
 
 
 if __name__ == '__main__':
