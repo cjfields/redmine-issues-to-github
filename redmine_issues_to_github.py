@@ -391,7 +391,7 @@ class MyRequest(urllib.request.Request):
             else:
                 return "GET"
 
-if __name__ == '__main__':   
+def main():
     issuesfile = 'issues.xml'
     user = 'github-user'
     repo = 'github-repo'
@@ -408,3 +408,7 @@ if __name__ == '__main__':
        }
     )
     rix.publishIssues(user, repo, authUser, authPassword)
+
+
+if __name__ == '__main__':
+    main()
