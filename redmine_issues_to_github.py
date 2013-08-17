@@ -205,13 +205,12 @@ class RedmineIssueXML(object):
             # To keep the old redmine id's we have to create dummy
             # tickets
             
-            # Do not create dummmy issues!
-            
-            #while currentIssue < int(issue.id):
-            #    if self.getIssue(currentIssue) == None:
-            #        self.createIssue("Dummy ticket %d" % currentIssue, labels=["Dummy-Ticket"])
-            #        self.closeIssue(currentIssue)
-            #    currentIssue += 1
+            # TODO: work around dummy issue creation (seems a bit tedious)
+            while currentIssue < int(issue.id):
+                if self.getIssue(currentIssue) == None:
+                    self.createIssue("Dummy ticket %d" % currentIssue, labels=["Dummy-Ticket"])
+                    self.closeIssue(currentIssue)
+                currentIssue += 1
 
             # Check if milestone exists
             milestone = None
@@ -221,6 +220,8 @@ class RedmineIssueXML(object):
                 milestone = self.milestones[issue.milestone]['number']
 
             # Check if issue exists
+            # TODO: since the ID is that originally from Redmine, we need to do the
+            # lookup in a different way.  Maybe by issue description instead?
             githubissuedata = self.getIssue(issue.id)
             if githubissuedata:
                 print("Issue %d already exists." % int(issue.id))
@@ -434,6 +435,7 @@ def main():
             authPassword = a
         elif o in ("-o", "--redmine_url"):
             redmineUrl = a
+        # need an assert here?
     
     rix = RedmineIssueXML()
     rix.readXML(
